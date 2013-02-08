@@ -1,10 +1,11 @@
 # Add a declarative step here for populating the DB with movies.
 
 Given /the following movies exist/ do |movies_table|
+  @all_movies = []
   movies_table.hashes.each do |movie|
     # each returned element will be a hash whose key is the table header.
     # you should arrange to add that movie to the database here.
-    Movie.create!(movie)
+    @all_movies << Movie.create!(movie)
   end
   #flunk "Unimplemented"
 end
@@ -22,8 +23,29 @@ end
 #  "When I uncheck the following ratings: PG, G, R"
 #  "When I check the following ratings: G"
 
-When /I (un)?check the following ratings: (.*)/ do |uncheck, rating_list|
+Given /I (un)?check the following ratings: (.*)/ do |uncheck, rating_list|
   # HINT: use String#split to split up the rating_list, then
   #   iterate over the ratings and reuse the "When I check..." or
   #   "When I uncheck..." steps in lines 89-95 of web_steps.rb
+  ratings = rating_list.split( ", " )
+  checkOrUncheck = uncheck ? "uncheck" : "check"
+  ratings.each do | r |
+    step "I #{checkOrUncheck} \"ratings_#{r}\""
+  end
+end
+
+Then /I should see all of the movies/ do
+  page.should have_css( "table#movies tbody tr", :count=>@all_movies.length ) 
+end
+ 
+Then /^the movie result should have the following values:$/ do |table|
+  table.hashes.each do |hash|
+    step "I should see \"#{hash['title']}\""
+  end
+end
+
+Then /^the movie result should not have the following values:$/ do |table|
+  table.hashes.each do |hash|
+    step "I should not see \"#{hash['title']}\""
+  end
 end
